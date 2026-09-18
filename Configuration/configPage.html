@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Custom Logo</title>
+</head>
+<body>
+<div id="customLogoConfigPage"
+     data-role="page"
+     class="page type-interior pluginConfigurationPage customLogoConfigPage"
+     data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="customLogoConfigForm">
+                <div class="verticalSection">
+                    <h2 class="sectionTitle">Custom Logo</h2>
+                    <p class="fieldDescription">
+                        Replaces the Jellyfin logo in the web client header and on the loading
+                        splash screen. The image is embedded in the server's custom CSS, so it also
+                        appears on the sign-in screen.
+                    </p>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="chkEnabled" />
+                        <span>Enable custom logo</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Turn this off to restore the default Jellyfin branding without deleting the uploaded image.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel" for="fileLogo">Logo image</label>
+                    <input type="file" id="fileLogo" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" />
+                    <div class="fieldDescription">
+                        PNG, SVG, WebP, JPEG or GIF. A wide transparent PNG around 400&#215;60&#8239;px works
+                        best for the header. Keep it under 1&#8239;MB &#8212; the image is inlined into the
+                        stylesheet that every client downloads.
+                    </div>
+                </div>
+
+                <div class="verticalSection" id="previewSection" style="display:none;">
+                    <h3 class="sectionTitle">Current logo</h3>
+                    <div style="padding:1em;background:#202020;border-radius:.3em;display:inline-block;">
+                        <img id="imgPreview" alt="Current logo" style="max-width:320px;max-height:120px;display:block;" />
+                    </div>
+                    <div class="fieldDescription" id="lblFileName"></div>
+                    <button is="emby-button" type="button" id="btnRemoveLogo" class="raised block" style="margin-top:1em;">
+                        <span>Remove logo</span>
+                    </button>
+                </div>
+
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="chkHeader" />
+                        <span>Replace the header logo</span>
+                    </label>
+                </div>
+
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="chkSplash" />
+                        <span>Replace the splash / loading logo</span>
+                    </label>
+                </div>
+
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="txtHeaderWidth" label="Header logo width" />
+                    <div class="fieldDescription">
+                        A CSS length such as <code>13.2em</code>, <code>200px</code> or <code>15%</code>.
+                        Defaults to <code>13.2em</code>, which matches the stock Jellyfin banner.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel" for="txtExtraCss">Additional CSS</label>
+                    <textarea id="txtExtraCss" class="emby-input" rows="6"
+                              spellcheck="false" style="font-family:monospace;"></textarea>
+                    <div class="fieldDescription">
+                        Optional. Appended inside the block this plugin manages in
+                        Dashboard &#8594; General &#8594; Custom CSS. Anything you write there yourself
+                        is left untouched.
+                    </div>
+                </div>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var PluginConfig = {
+                pluginId: 'b7e8dce1-44df-4b37-91a3-15fcf9f3b76a',
+                maxBytes: 4 * 1024 * 1024
+            };
+
+            function view(page, selector) {
+                return page.querySelector(selector);
+            }
+
+            function setPreview(page, dataUri, fileName) {
+                var section = view(page, '#previewSection');
+                var img = view(page, '#imgPreview');
+
+                if (dataUri) {
+                    img.src = dataUri;
+                    view(page, '#lblFileName').textContent = fileName || '';
+                    section.style.display = '';
+                } else {
+                    img.removeAttribute('src');
+                    view(page, '#lblFileName').textContent = '';
+                    section.style.display = 'none';
+                }
+            }
+
+            function load(page, config) {
+                view(page, '#chkEnabled').checked = config.Enabled !== false;
+                view(page, '#chkHeader').checked = config.ReplaceHeaderLogo !== false;
+                view(page, '#chkSplash').checked = config.ReplaceSplashLogo !== false;
+                view(page, '#txtHeaderWidth').value = config.HeaderLogoWidth || '13.2em';
+                view(page, '#txtExtraCss').value = config.ExtraCss || '';
+                page.pendingLogo = null;
+                page.currentConfig = config;
+                setPreview(page, config.LogoDataUri, config.LogoFileName);
+            }
+
+            function readFileAsDataUri(file) {
+                return new Promise(function (resolve, reject) {
+                    var reader = new FileReader();
+                    reader.onload = function () { resolve(String(reader.result)); };
+                    reader.onerror = function () { reject(reader.error); };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            document.querySelector('#customLogoConfigPage')
+                .addEventListener('pageshow', function () {
+                    var page = this;
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
+                        load(page, config);
+                        Dashboard.hideLoadingMsg();
+                    }).catch(function () {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert('Could not load the Custom Logo configuration.');
+                    });
+                });
+
+            document.querySelector('#customLogoConfigPage')
+                .addEventListener('change', function (e) {
+                    if (!e.target || e.target.id !== 'fileLogo') {
+                        return;
+                    }
+
+                    var page = document.querySelector('#customLogoConfigPage');
+                    var file = e.target.files && e.target.files[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    if (file.size > PluginConfig.maxBytes) {
+                        Dashboard.alert('That image is larger than 4 MB. Please use a smaller file.');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    readFileAsDataUri(file).then(function (dataUri) {
+                        page.pendingLogo = { dataUri: dataUri, name: file.name };
+                        setPreview(page, dataUri, file.name);
+                    }).catch(function () {
+                        Dashboard.alert('Could not read that file.');
+                    });
+                });
+
+            document.querySelector('#btnRemoveLogo')
+                .addEventListener('click', function () {
+                    var page = document.querySelector('#customLogoConfigPage');
+                    page.pendingLogo = { dataUri: '', name: '' };
+                    view(page, '#fileLogo').value = '';
+                    setPreview(page, '', '');
+                });
+
+            document.querySelector('#customLogoConfigForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var page = document.querySelector('#customLogoConfigPage');
+                    Dashboard.showLoadingMsg();
+
+                    ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
+                        config.Enabled = view(page, '#chkEnabled').checked;
+                        config.ReplaceHeaderLogo = view(page, '#chkHeader').checked;
+                        config.ReplaceSplashLogo = view(page, '#chkSplash').checked;
+                        config.HeaderLogoWidth = view(page, '#txtHeaderWidth').value || '13.2em';
+                        config.ExtraCss = view(page, '#txtExtraCss').value || '';
+
+                        if (page.pendingLogo) {
+                            config.LogoDataUri = page.pendingLogo.dataUri;
+                            config.LogoFileName = page.pendingLogo.name;
+                        }
+
+                        return ApiClient.updatePluginConfiguration(PluginConfig.pluginId, config)
+                            .then(function (result) {
+                                page.pendingLogo = null;
+                                Dashboard.processPluginConfigurationUpdateResult(result);
+                            });
+                    }).catch(function () {
+                        Dashboard.hideLoadingMsg();
+                        Dashboard.alert('Saving the Custom Logo configuration failed.');
+                    });
+
+                    return false;
+                });
+        })();
+    </script>
+</div>
+</body>
+</html>

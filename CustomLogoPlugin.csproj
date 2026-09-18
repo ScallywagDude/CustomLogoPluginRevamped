@@ -1,14 +1,61 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!--
+      net9.0  -> Jellyfin 10.11.x  (ABI 10.11.0.0)
+      net10.0 -> Jellyfin 12.0.x   (ABI 12.0.0.0)  [what was announced as "10.12"]
+    -->
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <AssemblyName>Jellyfin.Plugin.CustomLogo</AssemblyName>
+    <RootNamespace>Jellyfin.Plugin.CustomLogo</RootNamespace>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>false</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Jellyfin supplies these at runtime; never ship them next to the plugin. -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <!--
+    The two builds carry different version numbers on purpose. On a 12.0 server BOTH
+    manifest entries pass the targetAbi filter, and Jellyfin then picks the highest
+    version number (InstallationManager.GetCompatibleVersions orders descending), so
+    the .NET 10 build must sort above the .NET 9 one. On a 10.11 server the 12.0 entry
+    is filtered out by ABI and 2.0.0.0 is the only candidate.
+  -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <Version>2.0.0.0</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <Version>2.1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Sdk" Version="10.8.0" />
-    <PackageReference Include="MediaBrowser.Common" Version="10.8.0" />
-    <PackageReference Include="MediaBrowser.Controller" Version="10.8.0" />
-    <PackageReference Include="MediaBrowser.Model" Version="10.8.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
+  <!-- Jellyfin 10.11.x -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.11" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.11" />
+  </ItemGroup>
+
+  <!-- Jellyfin 12.0.x -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0" />
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\configPage.html" />
+    <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+
 </Project>

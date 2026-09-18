@@ -1,12 +1,12 @@
 {
   "name": "jellyfin-customlogo-plugin",
-  "version": "1.0.0",
-  "description": "Custom Logo Plugin for Jellyfin",
+  "version": "2.0.0",
+  "description": "Custom Logo plugin for Jellyfin 10.11 and 12.0",
   "private": true,
   "scripts": {
-    "build": "node build.js",
-    "package": "node package.js",
-    "deploy": "node build.js && node package.js"
+    "build": "node build.js --no-zip",
+    "package": "node build.js",
+    "deploy": "node build.js"
   },
   "dependencies": {
     "fs-extra": "^11.2.0",
