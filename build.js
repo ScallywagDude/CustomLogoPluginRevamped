@@ -57,7 +57,8 @@ const TARGETS = [
         abi: '10.11.0.0',
         version: '2.0.1.0',
         label: 'jf10.11',
-        jellyfin: 'Jellyfin 10.11.x'
+        jellyfin: 'Jellyfin 10.11.x',
+        tag: '2.0.1.0'
     },
     {
         tfm: 'net10.0',
@@ -66,7 +67,8 @@ const TARGETS = [
         label: 'jf12.0',
         // targetAbi is a minimum, so this build also covers 12.1.x, whose API
         // surface is identical to 12.0.0 for everything the plugin uses.
-        jellyfin: 'Jellyfin 12.0.x / 12.1.x'
+        jellyfin: 'Jellyfin 12.0.x / 12.1.x',
+        tag: '2.1.1.0'
     }
 ];
 
