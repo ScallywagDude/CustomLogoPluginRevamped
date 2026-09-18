@@ -14,6 +14,7 @@ namespace Jellyfin.Plugin.CustomLogo
         public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
         {
             serviceCollection.AddSingleton<BrandingCssService>();
+            serviceCollection.AddSingleton<WebAssetPatcher>();
             serviceCollection.AddHostedService<CustomLogoStartupService>();
         }
     }

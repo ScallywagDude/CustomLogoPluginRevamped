@@ -13,6 +13,7 @@ namespace Jellyfin.Plugin.CustomLogo.Services
     public sealed class CustomLogoStartupService : IHostedService, IDisposable
     {
         private readonly BrandingCssService _brandingCssService;
+        private readonly WebAssetPatcher _webAssetPatcher;
         private readonly ILogger<CustomLogoStartupService> _logger;
         private bool _subscribed;
         private bool _disposed;
@@ -21,10 +22,15 @@ namespace Jellyfin.Plugin.CustomLogo.Services
         /// Initializes a new instance of the <see cref="CustomLogoStartupService"/> class.
         /// </summary>
         /// <param name="brandingCssService">The branding CSS writer.</param>
+        /// <param name="webAssetPatcher">The web client patcher.</param>
         /// <param name="logger">The logger.</param>
-        public CustomLogoStartupService(BrandingCssService brandingCssService, ILogger<CustomLogoStartupService> logger)
+        public CustomLogoStartupService(
+            BrandingCssService brandingCssService,
+            WebAssetPatcher webAssetPatcher,
+            ILogger<CustomLogoStartupService> logger)
         {
             _brandingCssService = brandingCssService;
+            _webAssetPatcher = webAssetPatcher;
             _logger = logger;
         }
 
@@ -41,6 +47,9 @@ namespace Jellyfin.Plugin.CustomLogo.Services
             // Re-assert the block at start-up: the administrator may have edited custom CSS by
             // hand, or restored a backup, while the server was down.
             _brandingCssService.Synchronize();
+
+            // Re-apply on every start: a Jellyfin or web-client update replaces index.html.
+            _webAssetPatcher.Synchronize();
             _logger.LogDebug("Custom Logo: startup synchronization complete.");
 
             return Task.CompletedTask;
@@ -78,6 +87,7 @@ namespace Jellyfin.Plugin.CustomLogo.Services
         private void OnConfigurationChanged(object? sender, BasePluginConfiguration e)
         {
             _brandingCssService.Synchronize();
+            _webAssetPatcher.Synchronize();
         }
     }
 }

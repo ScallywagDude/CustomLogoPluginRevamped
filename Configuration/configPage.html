@@ -62,6 +62,31 @@
                     </div>
                 </div>
 
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="chkFavicon" />
+                        <span>Replace the browser favicon</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        The tab icon, and the icon used when the site is pinned or installed
+                        as an app.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="chkSplash" />
+                        <span>Replace the start-up splash logo</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        The logo shown while the app is loading, before the interface appears.
+                    </div>
+                </div>
+
+                <div class="verticalSection">
+                    <div class="fieldDescription" id="webPatchStatus" style="padding:.75em 1em;border-radius:.3em;background:#202020;"></div>
+                </div>
+
                 <div class="inputContainer">
                     <input is="emby-input" type="text" id="txtModernHeight" label="Logo height &#8212; top bar (12.x)" />
                     <div class="fieldDescription">
@@ -131,9 +156,22 @@
                 }
             }
 
+            function refreshStatus(page) {
+                var el = view(page, '#webPatchStatus');
+                ApiClient.getJSON(ApiClient.getUrl('CustomLogo/Status')).then(function (s) {
+                    el.textContent = s.Message || '';
+                    el.style.color = s.WebPatchApplied ? '' : '#e0a030';
+                }).catch(function () {
+                    el.textContent = 'Could not read the favicon / splash status.';
+                    el.style.color = '#e0a030';
+                });
+            }
+
             function load(page, config) {
                 view(page, '#chkEnabled').checked = config.Enabled !== false;
                 view(page, '#chkHeader').checked = config.ReplaceHeaderLogo !== false;
+                view(page, '#chkFavicon').checked = config.ReplaceFavicon !== false;
+                view(page, '#chkSplash').checked = config.ReplaceSplashLogo !== false;
                 view(page, '#txtHeaderWidth').value = config.HeaderLogoWidth || '13.2em';
                 view(page, '#txtModernHeight').value = config.ModernHeaderLogoHeight || '1.75em';
                 view(page, '#txtDrawerHeight').value = config.ModernDrawerLogoHeight || '2.5rem';
@@ -158,6 +196,7 @@
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         load(page, config);
+                        refreshStatus(page);
                         Dashboard.hideLoadingMsg();
                     }).catch(function () {
                         Dashboard.hideLoadingMsg();
@@ -208,6 +247,8 @@
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         config.Enabled = view(page, '#chkEnabled').checked;
                         config.ReplaceHeaderLogo = view(page, '#chkHeader').checked;
+                        config.ReplaceFavicon = view(page, '#chkFavicon').checked;
+                        config.ReplaceSplashLogo = view(page, '#chkSplash').checked;
                         config.HeaderLogoWidth = view(page, '#txtHeaderWidth').value || '13.2em';
                         config.ModernHeaderLogoHeight = view(page, '#txtModernHeight').value || '1.75em';
                         config.ModernDrawerLogoHeight = view(page, '#txtDrawerHeight').value || '2.5rem';
@@ -221,6 +262,7 @@
                         return ApiClient.updatePluginConfiguration(PluginConfig.pluginId, config)
                             .then(function (result) {
                                 page.pendingLogo = null;
+                                refreshStatus(page);
                                 Dashboard.processPluginConfigurationUpdateResult(result);
                             });
                     }).catch(function () {

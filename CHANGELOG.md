@@ -1,5 +1,53 @@
 # Changelog
 
+## v2.1.2 — 2026-09-18
+
+Adds favicon and splash-screen replacement.
+
+### Downloads
+
+| Your Jellyfin | Download | Build |
+| --- | --- | --- |
+| 10.11.x | `customlogo_2.0.2.0_jf10.11.zip` | 2.0.2.0 (.NET 9) |
+| 12.0.x, 12.1.x | `customlogo_2.1.2.0_jf12.0.zip` | 2.1.2.0 (.NET 10) |
+
+### Added
+
+- **Favicon replacement** — the browser tab icon, and the icon used when the site is
+  pinned or installed as an app.
+- **Splash logo replacement** — the logo shown while the app loads, before the
+  interface appears. This is the option removed in 2.1.1; it is now implemented by a
+  mechanism that can actually reach it.
+- A status line on the configuration page reporting whether the patch succeeded, plus
+  `GET /CustomLogo/Status`.
+
+### How it works, and what it costs
+
+Neither of these is reachable from branding CSS. The favicon is a `<link>` in the
+document head, which CSS cannot address at all; the splash markup is discarded when
+React mounts, before the branding stylesheet is injected. The only way to change
+either is to edit the served document, so the plugin now patches the web client's
+`index.html` and writes the logo alongside it.
+
+This is more invasive than CSS injection, so it is bounded:
+
+- The untouched `index.html` is copied into the plugin's data folder, and every
+  generated version is produced from that copy — the transform is idempotent and a
+  restore is exact.
+- Turning the options off, or clearing the logo, restores the original file and deletes
+  the asset.
+- A Jellyfin or web-client update replaces `index.html`; the new file will not carry the
+  plugin's marker, so it is adopted as the new original and the patch is re-applied on
+  the next start.
+- The logo file is content-addressed (`customlogo-asset.<hash>.png`) so browsers refetch
+  it when it changes. Favicons are cached hard.
+
+**It requires write access to the web client folder.** Docker installs normally have
+it. Distribution packages often do not — the web files are typically owned by root
+while Jellyfin runs as `jellyfin`. Where the write fails the plugin logs a warning,
+reports it on the configuration page, and carries on: the header logo is unaffected,
+since that goes through branding CSS and touches no files.
+
 ## v2.1.1 — 2026-09-18
 
 Makes the plugin work on the 12.x web interface. Version 2.0.0 only ever affected the

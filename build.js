@@ -55,29 +55,27 @@ const TARGETS = [
     {
         tfm: 'net9.0',
         abi: '10.11.0.0',
-        version: '2.0.1.0',
+        version: '2.0.2.0',
         label: 'jf10.11',
         jellyfin: 'Jellyfin 10.11.x',
-        tag: '2.0.1.0'
+        tag: '2.0.2.0'
     },
     {
         tfm: 'net10.0',
         abi: '12.0.0.0',
-        version: '2.1.1.0',
+        version: '2.1.2.0',
         label: 'jf12.0',
         // targetAbi is a minimum, so this build also covers 12.1.x, whose API
         // surface is identical to 12.0.0 for everything the plugin uses.
         jellyfin: 'Jellyfin 12.0.x / 12.1.x',
-        tag: '2.1.1.0'
+        tag: '2.1.2.0'
     }
 ];
 
 const CHANGELOG = [
-    'Works with the 12.x web interface. There the logo is an <img> element rather than a CSS',
-    'background, so the previous rules had no effect on it.',
-    'Covers the top bar, the navigation drawer and the dashboard, with configurable heights.',
-    'Removed the splash-screen option: branding CSS is injected after the splash is replaced,',
-    'so it could never have applied.'
+    'Adds favicon and start-up splash logo replacement, by patching the web client index.html',
+    '(neither is reachable from branding CSS). Reversible, and re-applied after a server update.',
+    'Needs write access to the web client folder; the header logo works either way.'
 ].join(' ');
 
 const DIST = path.join(ROOT, 'dist');
@@ -193,7 +191,18 @@ async function main() {
         const stageDir = path.join(DIST, `stage-${target.label}`);
         fs.ensureDirSync(stageDir);
 
-        run('dotnet', ['publish', PROJECT, '-c', 'Release', '-f', target.tfm, '-o', stageDir]);
+        // Pass the version explicitly so the assembly and meta.json cannot drift apart.
+        // Jellyfin reports the assembly version as the installed one, so a mismatch makes
+        // the catalogue offer an update that can never apply.
+        run('dotnet', [
+            'publish', PROJECT,
+            '-c', 'Release',
+            '-f', target.tfm,
+            '-o', stageDir,
+            `-p:Version=${target.version}`,
+            `-p:AssemblyVersion=${target.version}`,
+            `-p:FileVersion=${target.version}`
+        ]);
 
         // Jellyfin supplies its own assemblies; shipping copies causes load conflicts.
         for (const entry of fs.readdirSync(stageDir)) {

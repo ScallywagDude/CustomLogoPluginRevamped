@@ -14,8 +14,8 @@ Supported servers:
 
 | Jellyfin       | Runtime  | Plugin build | targetAbi    |
 | -------------- | -------- | ------------ | ------------ |
-| 10.11.x        | .NET 9   | `2.0.1.0`    | `10.11.0.0`  |
-| 12.0.x, 12.1.x | .NET 10  | `2.1.1.0`    | `12.0.0.0`   |
+| 10.11.x        | .NET 9   | `2.0.2.0`    | `10.11.0.0`  |
+| 12.0.x, 12.1.x | .NET 10  | `2.1.2.0`    | `12.0.0.0`   |
 
 > **About "10.12"** — there is no Jellyfin 10.12. Jellyfin dropped the static
 > leading `10.` from its version scheme, so what would have been 10.12.0 shipped
@@ -67,10 +67,23 @@ both:
   preserving the name. `!important` is required to beat MUI's inline
   `max-height`/`max-width`.
 
-There is deliberately no splash-screen option. The splash markup lives in `index.html`
-and is replaced the moment React mounts, while branding CSS is injected by a React
-component *after* mount — so a `.splashLogo` rule can never apply. Earlier versions
-shipped that toggle; it did nothing.
+### Favicon and splash logo
+
+These two are not reachable from branding CSS at all — the favicon is a `<link>` in the
+document head, and the splash markup is discarded when React mounts, before the branding
+stylesheet is injected. So the plugin patches the web client's `index.html` and writes the
+logo file beside it.
+
+The untouched `index.html` is copied into the plugin's data folder and every generated
+version is produced from that copy, so the transform is idempotent and turning the options
+off restores the original exactly. A Jellyfin update replaces `index.html`; the new file
+will not carry the plugin's marker, so it is adopted as the new original and re-patched on
+the next start. The asset is content-addressed so browsers refetch it when it changes.
+
+**This needs write access to the web client folder.** Docker installs normally have it;
+distribution packages often do not, since the web files are usually owned by root while
+Jellyfin runs as `jellyfin`. If the write fails the plugin says so on its configuration
+page and carries on — the header logo goes through branding CSS and touches no files.
 
 Note that a user who ticks "Disable custom CSS" in their own display settings will not
 see the custom logo, because Jellyfin skips the branding stylesheet for them.
@@ -98,7 +111,7 @@ is published.
 
 1. Download the zip for your server from the
    [releases page](https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases):
-   `customlogo_2.0.1.0_jf10.11.zip` or `customlogo_2.1.1.0_jf12.0.zip`.
+   `customlogo_2.0.2.0_jf10.11.zip` or `customlogo_2.1.2.0_jf12.0.zip`.
 2. Extract it into `<data dir>/plugins/Custom Logo/` — the folder should contain
    `Jellyfin.Plugin.CustomLogo.dll` and `meta.json`.
 3. Restart Jellyfin.

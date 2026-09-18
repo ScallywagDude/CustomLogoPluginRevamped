@@ -1,4 +1,5 @@
 using System;
+using Jellyfin.Plugin.CustomLogo.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,37 @@ namespace Jellyfin.Plugin.CustomLogo.Controllers
     [AllowAnonymous]
     public class LogoController : ControllerBase
     {
+        private readonly WebAssetPatcher _webAssetPatcher;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogoController"/> class.
+        /// </summary>
+        /// <param name="webAssetPatcher">The web client patcher.</param>
+        public LogoController(WebAssetPatcher webAssetPatcher)
+        {
+            _webAssetPatcher = webAssetPatcher;
+        }
+
+        /// <summary>
+        /// Reports whether the favicon and splash patch could be applied.
+        /// </summary>
+        /// <remarks>
+        /// Deliberately free of file-system paths so it is safe to serve anonymously
+        /// alongside the logo itself.
+        /// </remarks>
+        /// <response code="200">Status returned.</response>
+        /// <returns>The patch status.</returns>
+        [HttpGet("Status")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult GetStatus()
+        {
+            return new JsonResult(new
+            {
+                WebPatchApplied = _webAssetPatcher.Applied,
+                Message = _webAssetPatcher.Status
+            });
+        }
+
         /// <summary>
         /// Gets the configured logo image.
         /// </summary>
@@ -32,7 +64,7 @@ namespace Jellyfin.Plugin.CustomLogo.Controllers
         public ActionResult GetLogo()
         {
             var config = Plugin.Instance?.Configuration;
-            if (config is null || !TryDecodeDataUri(config.LogoDataUri, out var contentType, out var bytes))
+            if (config is null || !CustomLogoImage.TryParse(config.LogoDataUri, out var contentType, out var bytes))
             {
                 return NotFound();
             }
@@ -40,58 +72,5 @@ namespace Jellyfin.Plugin.CustomLogo.Controllers
             return File(bytes, contentType);
         }
 
-        /// <summary>
-        /// Parses an RFC 2397 base64 data URI into its media type and payload.
-        /// </summary>
-        /// <param name="dataUri">The data URI.</param>
-        /// <param name="contentType">The parsed media type.</param>
-        /// <param name="bytes">The decoded payload.</param>
-        /// <returns><c>true</c> when the URI was a well formed base64 image data URI.</returns>
-        internal static bool TryDecodeDataUri(string? dataUri, out string contentType, out byte[] bytes)
-        {
-            contentType = string.Empty;
-            bytes = Array.Empty<byte>();
-
-            if (string.IsNullOrWhiteSpace(dataUri))
-            {
-                return false;
-            }
-
-            var value = dataUri.Trim();
-            if (!value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            var comma = value.IndexOf(',', StringComparison.Ordinal);
-            if (comma < 0)
-            {
-                return false;
-            }
-
-            // "data:" == 5 characters.
-            var header = value.Substring(5, comma - 5);
-            if (!header.EndsWith(";base64", StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            contentType = header.Substring(0, header.Length - ";base64".Length);
-            if (contentType.Length == 0)
-            {
-                return false;
-            }
-
-            var payload = value.Substring(comma + 1);
-            var buffer = new byte[((payload.Length * 3) / 4) + 4];
-            if (!Convert.TryFromBase64String(payload, buffer, out var written) || written == 0)
-            {
-                return false;
-            }
-
-            bytes = new byte[written];
-            Array.Copy(buffer, bytes, written);
-            return true;
-        }
     }
 }

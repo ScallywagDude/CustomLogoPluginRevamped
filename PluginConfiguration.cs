@@ -31,6 +31,24 @@ namespace Jellyfin.Plugin.CustomLogo
         public bool ReplaceHeaderLogo { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the browser favicon is replaced.
+        /// </summary>
+        /// <remarks>
+        /// Requires write access to the web client folder, since the favicon is declared
+        /// in <c>index.html</c> and cannot be reached from CSS.
+        /// </remarks>
+        public bool ReplaceFavicon { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the start-up splash logo is replaced.
+        /// </summary>
+        /// <remarks>
+        /// Also requires write access to the web client folder: the splash markup is
+        /// replaced when React mounts, before branding CSS is injected.
+        /// </remarks>
+        public bool ReplaceSplashLogo { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets the CSS height of the logo in the 12.x toolbar (top bar).
         /// </summary>
         /// <remarks>
