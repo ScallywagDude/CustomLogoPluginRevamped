@@ -12,10 +12,10 @@ https://raw.githubusercontent.com/ScallywagDude/CustomLogoPluginRevamped/main/ma
 
 Supported servers:
 
-| Jellyfin | Runtime  | Plugin build | targetAbi    |
-| -------- | -------- | ------------ | ------------ |
-| 10.11.x  | .NET 9   | `2.0.0.0`    | `10.11.0.0`  |
-| 12.0.x   | .NET 10  | `2.1.0.0`    | `12.0.0.0`   |
+| Jellyfin       | Runtime  | Plugin build | targetAbi    |
+| -------------- | -------- | ------------ | ------------ |
+| 10.11.x        | .NET 9   | `2.0.1.0`    | `10.11.0.0`  |
+| 12.0.x, 12.1.x | .NET 10  | `2.1.1.0`    | `12.0.0.0`   |
 
 > **About "10.12"** — there is no Jellyfin 10.12. Jellyfin dropped the static
 > leading `10.` from its version scheme, so what would have been 10.12.0 shipped
@@ -51,10 +51,29 @@ exist, and a relative URL in injected CSS resolves against the current page rath
 than the stylesheet, which breaks under a reverse-proxy base path. An inline image
 has neither problem.
 
-The rules target `.pageTitleWithDefaultLogo` (header, including the `layout-tv`
-variant) and `.splashLogo`, the class names the web client uses in both 10.11.11
-and 12.0. They are marked `!important` because the stock image is set by the active
-theme stylesheet, whose load order relative to branding CSS is not guaranteed.
+The two interfaces draw the logo in completely different ways, so the plugin targets
+both:
+
+- **Legacy interface** (all of 10.11, and the `legacy` app in 12.x) draws it as a CSS
+  background on `.pageTitleWithDefaultLogo`, set by the active *theme* stylesheet.
+  The override is `!important` because the load order relative to branding CSS is not
+  guaranteed.
+- **Modern interface** (12.x) and the **dashboard** render it as an `<img>` — from
+  `ServerButton` in the top bar and `DrawerHeaderLink` in the navigation drawer.
+  CSS cannot change an `src`, so the bitmap is swapped with `content: url(...)`,
+  supported on regular elements in Chromium, WebKit and Firefox 63+. Those components
+  carry no class of their own, so the selector keys on the asset name,
+  `img[src*="icon-transparent"]` — webpack emits it as `icon-transparent.<hash>.png`,
+  preserving the name. `!important` is required to beat MUI's inline
+  `max-height`/`max-width`.
+
+There is deliberately no splash-screen option. The splash markup lives in `index.html`
+and is replaced the moment React mounts, while branding CSS is injected by a React
+component *after* mount — so a `.splashLogo` rule can never apply. Earlier versions
+shipped that toggle; it did nothing.
+
+Note that a user who ticks "Disable custom CSS" in their own display settings will not
+see the custom logo, because Jellyfin skips the branding stylesheet for them.
 
 ## Installing
 
@@ -79,7 +98,7 @@ is published.
 
 1. Download the zip for your server from the
    [releases page](https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases):
-   `customlogo_2.0.0.0_jf10.11.zip` or `customlogo_2.1.0.0_jf12.0.zip`.
+   `customlogo_2.0.1.0_jf10.11.zip` or `customlogo_2.1.1.0_jf12.0.zip`.
 2. Extract it into `<data dir>/plugins/Custom Logo/` — the folder should contain
    `Jellyfin.Plugin.CustomLogo.dll` and `meta.json`.
 3. Restart Jellyfin.

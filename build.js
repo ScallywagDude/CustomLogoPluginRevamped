@@ -55,27 +55,27 @@ const TARGETS = [
     {
         tfm: 'net9.0',
         abi: '10.11.0.0',
-        version: '2.0.0.0',
+        version: '2.0.1.0',
         label: 'jf10.11',
-        jellyfin: 'Jellyfin 10.11.x',
-        tag: '2.0.0.0-2.1.0.0'
+        jellyfin: 'Jellyfin 10.11.x'
     },
     {
         tfm: 'net10.0',
         abi: '12.0.0.0',
-        version: '2.1.0.0',
+        version: '2.1.1.0',
         label: 'jf12.0',
         // targetAbi is a minimum, so this build also covers 12.1.x, whose API
         // surface is identical to 12.0.0 for everything the plugin uses.
-        jellyfin: 'Jellyfin 12.0.x / 12.1.x',
-        tag: '2.1.0.0'
+        jellyfin: 'Jellyfin 12.0.x / 12.1.x'
     }
 ];
 
 const CHANGELOG = [
-    'Rebuilt for Jellyfin 10.11 (.NET 9) and 12.0 (.NET 10).',
-    'The logo is now actually applied, by injecting a managed block into the server branding CSS.',
-    'Added a working configuration page with upload, preview and removal.'
+    'Works with the 12.x web interface. There the logo is an <img> element rather than a CSS',
+    'background, so the previous rules had no effect on it.',
+    'Covers the top bar, the navigation drawer and the dashboard, with configurable heights.',
+    'Removed the splash-screen option: branding CSS is injected after the splash is replaced,',
+    'so it could never have applied.'
 ].join(' ');
 
 const DIST = path.join(ROOT, 'dist');
@@ -94,7 +94,7 @@ function releaseTag() {
         return process.env.GITHUB_REF_NAME;
     }
 
-    return 'v2.0.0';
+    return 'v2.1.1';
 }
 
 function run(cmd, args) {

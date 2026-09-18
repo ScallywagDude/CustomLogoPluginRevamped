@@ -51,25 +51,37 @@
                     </button>
                 </div>
 
-                <div class="checkboxContainer">
+                <div class="checkboxContainer checkboxContainer-withDescription">
                     <label>
                         <input is="emby-checkbox" type="checkbox" id="chkHeader" />
                         <span>Replace the header logo</span>
                     </label>
-                </div>
-
-                <div class="checkboxContainer">
-                    <label>
-                        <input is="emby-checkbox" type="checkbox" id="chkSplash" />
-                        <span>Replace the splash / loading logo</span>
-                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Covers the top bar and the navigation drawer in the 12.x interface and
+                        the dashboard, plus the header in the legacy interface.
+                    </div>
                 </div>
 
                 <div class="inputContainer">
-                    <input is="emby-input" type="text" id="txtHeaderWidth" label="Header logo width" />
+                    <input is="emby-input" type="text" id="txtModernHeight" label="Logo height &#8212; top bar (12.x)" />
                     <div class="fieldDescription">
-                        A CSS length such as <code>13.2em</code>, <code>200px</code> or <code>15%</code>.
-                        Defaults to <code>13.2em</code>, which matches the stock Jellyfin banner.
+                        A CSS length such as <code>1.75em</code> or <code>28px</code>. The width stays
+                        automatic, so a wide logo grows sideways rather than being squashed.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="txtDrawerHeight" label="Logo height &#8212; navigation drawer (12.x)" />
+                    <div class="fieldDescription">
+                        Defaults to <code>2.5rem</code>, matching the stock icon.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="txtHeaderWidth" label="Logo width &#8212; legacy interface" />
+                    <div class="fieldDescription">
+                        Only affects the older interface, which draws the logo as a background image.
+                        Defaults to <code>13.2em</code>, matching the stock banner.
                     </div>
                 </div>
 
@@ -122,8 +134,9 @@
             function load(page, config) {
                 view(page, '#chkEnabled').checked = config.Enabled !== false;
                 view(page, '#chkHeader').checked = config.ReplaceHeaderLogo !== false;
-                view(page, '#chkSplash').checked = config.ReplaceSplashLogo !== false;
                 view(page, '#txtHeaderWidth').value = config.HeaderLogoWidth || '13.2em';
+                view(page, '#txtModernHeight').value = config.ModernHeaderLogoHeight || '1.75em';
+                view(page, '#txtDrawerHeight').value = config.ModernDrawerLogoHeight || '2.5rem';
                 view(page, '#txtExtraCss').value = config.ExtraCss || '';
                 page.pendingLogo = null;
                 page.currentConfig = config;
@@ -195,8 +208,9 @@
                     ApiClient.getPluginConfiguration(PluginConfig.pluginId).then(function (config) {
                         config.Enabled = view(page, '#chkEnabled').checked;
                         config.ReplaceHeaderLogo = view(page, '#chkHeader').checked;
-                        config.ReplaceSplashLogo = view(page, '#chkSplash').checked;
                         config.HeaderLogoWidth = view(page, '#txtHeaderWidth').value || '13.2em';
+                        config.ModernHeaderLogoHeight = view(page, '#txtModernHeight').value || '1.75em';
+                        config.ModernDrawerLogoHeight = view(page, '#txtDrawerHeight').value || '2.5rem';
                         config.ExtraCss = view(page, '#txtExtraCss').value || '';
 
                         if (page.pendingLogo) {

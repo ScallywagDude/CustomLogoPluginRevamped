@@ -31,12 +31,21 @@ namespace Jellyfin.Plugin.CustomLogo
         public bool ReplaceHeaderLogo { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the splash/loading logo is replaced.
+        /// Gets or sets the CSS height of the logo in the 12.x toolbar (top bar).
         /// </summary>
-        public bool ReplaceSplashLogo { get; set; } = true;
+        /// <remarks>
+        /// The stock icon is a 1.25em square. A wider logo keeps this height and grows
+        /// sideways, since the width is left automatic.
+        /// </remarks>
+        public string ModernHeaderLogoHeight { get; set; } = "1.75em";
 
         /// <summary>
-        /// Gets or sets the CSS width used for the header logo, e.g. <c>13.2em</c>.
+        /// Gets or sets the CSS height of the logo in the 12.x navigation drawer.
+        /// </summary>
+        public string ModernDrawerLogoHeight { get; set; } = "2.5rem";
+
+        /// <summary>
+        /// Gets or sets the CSS width of the legacy header logo, e.g. <c>13.2em</c>.
         /// </summary>
         public string HeaderLogoWidth { get; set; } = "13.2em";
 

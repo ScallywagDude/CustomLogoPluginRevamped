@@ -9,20 +9,20 @@
     "imageUrl": "https://raw.githubusercontent.com/ScallywagDude/CustomLogoPluginRevamped/main/static/icon.png",
     "versions": [
       {
-        "version": "2.1.0.0",
-        "changelog": "Rebuilt for Jellyfin 10.11 (.NET 9) and 12.0 (.NET 10). The logo is now actually applied, by injecting a managed block into the server branding CSS. Added a working configuration page with upload, preview and removal. Build for Jellyfin 12.0.x.",
+        "version": "2.1.1.0",
+        "changelog": "Works with the 12.x web interface. There the logo is an <img> element rather than a CSS background, so the previous rules had no effect on it. Covers the top bar, the navigation drawer and the dashboard, with configurable heights. Removed the splash-screen option: branding CSS is injected after the splash is replaced, so it could never have applied. Build for Jellyfin 12.0.x / 12.1.x.",
         "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases/download/2.1.0.0/customlogo_2.1.0.0_jf12.0.zip",
-        "checksum": "105ce9776d2e0cc363096b9ab1853e30",
-        "timestamp": "2026-09-18T19:28:06Z"
+        "sourceUrl": "https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases/download/v2.1.1/customlogo_2.1.1.0_jf12.0.zip",
+        "checksum": "af817210a560f757243354ac7f7d69b0",
+        "timestamp": "2026-09-18T20:01:05Z"
       },
       {
-        "version": "2.0.0.0",
-        "changelog": "Rebuilt for Jellyfin 10.11 (.NET 9) and 12.0 (.NET 10). The logo is now actually applied, by injecting a managed block into the server branding CSS. Added a working configuration page with upload, preview and removal. Build for Jellyfin 10.11.x.",
+        "version": "2.0.1.0",
+        "changelog": "Works with the 12.x web interface. There the logo is an <img> element rather than a CSS background, so the previous rules had no effect on it. Covers the top bar, the navigation drawer and the dashboard, with configurable heights. Removed the splash-screen option: branding CSS is injected after the splash is replaced, so it could never have applied. Build for Jellyfin 10.11.x.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases/download/2.0.0.0-2.1.0.0/customlogo_2.0.0.0_jf10.11.zip",
-        "checksum": "02994af9c465387ff0d65d1af69c546d",
-        "timestamp": "2026-09-18T19:28:06Z"
+        "sourceUrl": "https://github.com/ScallywagDude/CustomLogoPluginRevamped/releases/download/v2.1.1/customlogo_2.0.1.0_jf10.11.zip",
+        "checksum": "c9f692e1f9bf34940d8be7a424e0a6bd",
+        "timestamp": "2026-09-18T20:01:05Z"
       }
     ]
   }
