@@ -47,9 +47,29 @@ const PLUGIN = {
 // The 12.0 build carries the higher version on purpose. On a 12.0 server BOTH
 // entries pass the targetAbi filter and Jellyfin installs the highest version
 // number, so the .NET 10 build has to sort above the .NET 9 one.
+//
+// `tag` pins the GitHub release a build's asset lives in. Set it when the two
+// builds are published under different tags; omit it to use the tag passed via
+// --tag / GITHUB_REF_NAME.
 const TARGETS = [
-    { tfm: 'net9.0', abi: '10.11.0.0', version: '2.0.0.0', label: 'jf10.11', jellyfin: 'Jellyfin 10.11.x' },
-    { tfm: 'net10.0', abi: '12.0.0.0', version: '2.1.0.0', label: 'jf12.0', jellyfin: 'Jellyfin 12.0.x' }
+    {
+        tfm: 'net9.0',
+        abi: '10.11.0.0',
+        version: '2.0.0.0',
+        label: 'jf10.11',
+        jellyfin: 'Jellyfin 10.11.x',
+        tag: '2.0.0.0-2.1.0.0'
+    },
+    {
+        tfm: 'net10.0',
+        abi: '12.0.0.0',
+        version: '2.1.0.0',
+        label: 'jf12.0',
+        // targetAbi is a minimum, so this build also covers 12.1.x, whose API
+        // surface is identical to 12.0.0 for everything the plugin uses.
+        jellyfin: 'Jellyfin 12.0.x / 12.1.x',
+        tag: '2.1.0.0'
+    }
 ];
 
 const CHANGELOG = [
@@ -158,7 +178,6 @@ async function main() {
     }
 
     const tag = releaseTag();
-    const releaseBaseUrl = `${REPO_URL}/releases/download/${tag}`;
 
     fs.removeSync(DIST);
     fs.ensureDirSync(DIST);
@@ -220,7 +239,7 @@ async function main() {
             version: target.version,
             changelog: `${CHANGELOG} Build for ${target.jellyfin}.`,
             targetAbi: target.abi,
-            sourceUrl: `${releaseBaseUrl}/${zipName}`,
+            sourceUrl: `${REPO_URL}/releases/download/${target.tag || tag}/${zipName}`,
             checksum: checksum,
             timestamp: timestamp
         });
@@ -237,8 +256,10 @@ async function main() {
     for (const f of fs.readdirSync(DIST)) {
         console.log(`  dist/${f}`);
     }
-    console.log(`\nRelease tag:    ${tag}`);
-    console.log(`Upload both zips to: ${releaseBaseUrl.replace('/releases/download/', '/releases/tag/')}`);
+    console.log('\nUpload each zip to its release:');
+    for (const t of TARGETS) {
+        console.log(`  customlogo_${t.version}_${t.label}.zip -> ${REPO_URL}/releases/tag/${t.tag || tag}`);
+    }
     console.log(`Repository URL for users:\n  ${MANIFEST_URL}`);
 }
 
